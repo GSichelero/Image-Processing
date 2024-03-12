@@ -16,7 +16,7 @@ INPUT_IMAGE =  'arroz.bmp'
 
 # TODO: ajuste estes parâmetros!
 NEGATIVO = False
-THRESHOLD = 0.4
+THRESHOLD = 0.8
 ALTURA_MIN = 1
 LARGURA_MIN = 1
 N_PIXELS_MIN = 1
@@ -35,8 +35,30 @@ Valor de retorno: versão binarizada da img_in.'''
     # TODO: escreva o código desta função.
     # Dica/desafio: usando a função np.where, dá para fazer a binarização muito
     # rapidamente, e com apenas uma linha de código!
+    print(img.dtype)
+    img = np.where(img < threshold, 0, -1)
+    img = img.astype(np.float32)
+
+    print(img.dtype)
+    print(img.shape)
+    print(img)
+
+    return img
 
 #-------------------------------------------------------------------------------
+
+def inunda(img, x, y, label):
+    if x < 0 or x >= img.shape[1] or y < 0 or y >= img.shape[0]:
+        return
+    print(x, y, img[y,x])
+    if img[y,x] != -1:
+        return
+    img[img == img[y,x]] = label
+    print(img[y,x])
+    inunda(img, x+1, y, label)
+    inunda(img, x-1, y, label)
+    inunda(img, x, y+1, label)
+    inunda(img, x, y-1, label)
 
 def rotula (img, largura_min, altura_min, n_pixels_min):
     '''Rotulagem usando flood fill. Marca os objetos da imagem com os valores
@@ -57,6 +79,38 @@ respectivamente: topo, esquerda, baixo e direita.'''
 
     # TODO: escreva esta função.
     # Use a abordagem com flood fill recursivo.
+        
+    
+    max_height = img.shape[0] - 1
+    max_width = img.shape[1] - 1
+    print(max_height, max_width)
+
+    label = 0.1
+    componentes = []
+    for y in range(max_height):
+        for x in range(max_width):
+            if img[y,x] == -1:
+                print(img[y,x])
+                label += 0.1
+                inunda(img, x, y, label)
+                print(label)
+    
+    # display the image
+    cv2.imshow('teste', img)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
+
+    for y in range(max_height):
+        for x in range(max_width):
+            # print when the pixel is different from 0 and -1
+            if img[y,x] != 0 and img[y,x] != -1:
+                print(img[y,x], x, y)
+
+    return componentes
+
+
+
+
 
 #===============================================================================
 
