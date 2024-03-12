@@ -95,14 +95,12 @@ respectivamente: topo, esquerda, baixo e direita.'''
                 inunda(img, x, y, label)
                 print(label)
     
-    # display the image
     cv2.imshow('teste', img)
     cv2.waitKey()
     cv2.destroyAllWindows()
 
     for y in range(max_height):
         for x in range(max_width):
-            # print when the pixel is different from 0 and -1
             if img[y,x] != 0 and img[y,x] != -1:
                 print(img[y,x], x, y)
 
