@@ -35,30 +35,22 @@ Valor de retorno: versão binarizada da img_in.'''
     # TODO: escreva o código desta função.
     # Dica/desafio: usando a função np.where, dá para fazer a binarização muito
     # rapidamente, e com apenas uma linha de código!
-    print(img.dtype)
-    img = np.where(img < threshold, 0, -1)
-    img = img.astype(np.float32)
+
+    cv2.imshow('image-before-binarization', img)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
 
     print(img.dtype)
-    print(img.shape)
-    print(img)
+    img = np.where(img < threshold, 0, 1)
+    img = img.astype(np.float32)
+
+    cv2.imshow('image-after-binarization', img)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
 
     return img
 
 #-------------------------------------------------------------------------------
-
-def inunda(img, x, y, label):
-    if x < 0 or x >= img.shape[1] or y < 0 or y >= img.shape[0]:
-        return
-    print(x, y, img[y,x])
-    if img[y,x] != -1:
-        return
-    img[img == img[y,x]] = label
-    print(img[y,x])
-    inunda(img, x+1, y, label)
-    inunda(img, x-1, y, label)
-    inunda(img, x, y+1, label)
-    inunda(img, x, y-1, label)
 
 def rotula (img, largura_min, altura_min, n_pixels_min):
     '''Rotulagem usando flood fill. Marca os objetos da imagem com os valores
@@ -79,30 +71,42 @@ respectivamente: topo, esquerda, baixo e direita.'''
 
     # TODO: escreva esta função.
     # Use a abordagem com flood fill recursivo.
+
+    def inunda(img, x, y, label, max_width, max_height):
+        if x < 0 or x >= max_width or y < 0 or y >= max_height:
+            return
+        if img[y,x] != 1:
+            return
+        # img[img == img[y,x]] = label
+        img[y,x] = label
+        # print('novo loop: ', img[y,x])
+        inunda(img, x+1, y, label, max_width, max_height)
+        inunda(img, x-1, y, label, max_width, max_height)
+        inunda(img, x, y+1, label, max_width, max_height)
+        inunda(img, x, y-1, label, max_width, max_height)
         
     
-    max_height = img.shape[0] - 1
-    max_width = img.shape[1] - 1
+    max_height = img.shape[0]
+    max_width = img.shape[1]
     print(max_height, max_width)
 
-    label = 0.1
+    label = 2
     componentes = []
     for y in range(max_height):
         for x in range(max_width):
-            if img[y,x] == -1:
-                print(img[y,x])
-                label += 0.1
-                inunda(img, x, y, label)
-                print(label)
+            if img[y,x] == 1:
+                print('novo arroz: ', x, y, img[y,x], 'label: ', label)
+                label += 1
+                inunda(img, x, y, label, max_width, max_height)
     
-    cv2.imshow('teste', img)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
+    # cv2.imshow('teste', img)
+    # cv2.waitKey()
+    # cv2.destroyAllWindows()
 
-    for y in range(max_height):
-        for x in range(max_width):
-            if img[y,x] != 0 and img[y,x] != -1:
-                print(img[y,x], x, y)
+    # for y in range(max_height):
+    #     for x in range(max_width):
+    #         if img[y,x] != 0 and img[y,x] != -1:
+    #             print(img[y,x], x, y)
 
     return componentes
 
