@@ -63,56 +63,53 @@ respectivamente: topo, esquerda, baixo e direita.'''
     # TODO: escreva esta função.
     # Use a abordagem com flood fill recursivo.
 
-    def inunda(img, x, y, label, max_width, max_height):
+    def inunda(img, x, y, label, max_width, max_height, component):
         if x < 0 or x >= max_width or y < 0 or y >= max_height:
             return
         if img[y,x] != 1:
             return
         img[y,x] = label
-        inunda(img, x+1, y, label, max_width, max_height)
-        inunda(img, x-1, y, label, max_width, max_height)
-        inunda(img, x, y+1, label, max_width, max_height)
-        inunda(img, x, y-1, label, max_width, max_height)
+        component['n_pixels'] += 1
+        component['T'] = min(component['T'], y)
+        component['L'] = min(component['L'], x)
+        component['B'] = max(component['B'], y)
+        component['R'] = max(component['R'], x)
+        inunda(img, x+1, y, label, max_width, max_height, component)
+        inunda(img, x-1, y, label, max_width, max_height, component)
+        inunda(img, x, y+1, label, max_width, max_height, component)
+        inunda(img, x, y-1, label, max_width, max_height, component)
         
     
     max_height = img.shape[0]
     max_width = img.shape[1]
 
+    components = []
     label = 2
     for y in range(max_height):
         for x in range(max_width):
             if img[y,x] == 1:
                 print('novo arroz: ', x, y, img[y,x], 'label: ', label)
-                label += 1
-                inunda(img, x, y, label, max_width, max_height)
+                component = {
+                    'label': label,
+                    'n_pixels': 0,
+                    'T': max_height,
+                    'L': max_width,
+                    'B': 0,
+                    'R': 0
+                }
 
-    components = []
-    for l in range(2, label+1):
-        component = {}
-        component['label'] = l
-        component['n_pixels'] = 0
-        component['T'] = max_height
-        component['L'] = max_width
-        component['B'] = 0
-        component['R'] = 0
-        for y in range(max_height):
-            for x in range(max_width):
-                if img[y,x] == l:
-                    component['n_pixels'] += 1
-                    component['T'] = min(component['T'], y)
-                    component['L'] = min(component['L'], x)
-                    component['B'] = max(component['B'], y)
-                    component['R'] = max(component['R'], x)
-            
-        print('componente: ', l, 'n_pixels: ', component['n_pixels'], 'T: ', component['T'], 'L: ', component['L'], 'B: ', component['B'], 'R: ', component['R'])
-        if (component['n_pixels'] >= n_pixels_min and
-        component['T'] <= max_height and
-        component['L'] <= max_width and
-        component['B'] >= 0 and
-        component['R'] >= 0 and
-        (component['R'] - component['L']) >= largura_min and
-        (component['B'] - component['T']) >= altura_min):
-            components.append(component)
+                inunda(img, x, y, label, max_width, max_height, component)
+
+                if (component['n_pixels'] >= n_pixels_min and
+                component['T'] <= max_height and
+                component['L'] <= max_width and
+                component['B'] >= 0 and
+                component['R'] >= 0 and
+                (component['R'] - component['L']) >= largura_min and
+                (component['B'] - component['T']) >= altura_min):
+                    components.append(component)
+                
+                label += 1
 
     return components
 
