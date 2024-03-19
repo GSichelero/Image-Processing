@@ -17,9 +17,9 @@ INPUT_IMAGE =  'arroz.bmp'
 # TODO: ajuste estes parâmetros!
 NEGATIVO = False
 THRESHOLD = 0.8
-ALTURA_MIN = 1
-LARGURA_MIN = 1
-N_PIXELS_MIN = 1
+ALTURA_MIN = 8
+LARGURA_MIN = 8
+N_PIXELS_MIN = 64
 
 #===============================================================================
 
@@ -36,17 +36,8 @@ Valor de retorno: versão binarizada da img_in.'''
     # Dica/desafio: usando a função np.where, dá para fazer a binarização muito
     # rapidamente, e com apenas uma linha de código!
 
-    cv2.imshow('image-before-binarization', img)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
-
-    print(img.dtype)
     img = np.where(img < threshold, 0, 1)
     img = img.astype(np.float32)
-
-    cv2.imshow('image-after-binarization', img)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
 
     return img
 
@@ -77,9 +68,7 @@ respectivamente: topo, esquerda, baixo e direita.'''
             return
         if img[y,x] != 1:
             return
-        # img[img == img[y,x]] = label
         img[y,x] = label
-        # print('novo loop: ', img[y,x])
         inunda(img, x+1, y, label, max_width, max_height)
         inunda(img, x-1, y, label, max_width, max_height)
         inunda(img, x, y+1, label, max_width, max_height)
@@ -88,27 +77,44 @@ respectivamente: topo, esquerda, baixo e direita.'''
     
     max_height = img.shape[0]
     max_width = img.shape[1]
-    print(max_height, max_width)
 
     label = 2
-    componentes = []
     for y in range(max_height):
         for x in range(max_width):
             if img[y,x] == 1:
                 print('novo arroz: ', x, y, img[y,x], 'label: ', label)
                 label += 1
                 inunda(img, x, y, label, max_width, max_height)
-    
-    # cv2.imshow('teste', img)
-    # cv2.waitKey()
-    # cv2.destroyAllWindows()
 
-    # for y in range(max_height):
-    #     for x in range(max_width):
-    #         if img[y,x] != 0 and img[y,x] != -1:
-    #             print(img[y,x], x, y)
+    components = []
+    for l in range(2, label+1):
+        component = {}
+        component['label'] = l
+        component['n_pixels'] = 0
+        component['T'] = max_height
+        component['L'] = max_width
+        component['B'] = 0
+        component['R'] = 0
+        for y in range(max_height):
+            for x in range(max_width):
+                if img[y,x] == l:
+                    component['n_pixels'] += 1
+                    component['T'] = min(component['T'], y)
+                    component['L'] = min(component['L'], x)
+                    component['B'] = max(component['B'], y)
+                    component['R'] = max(component['R'], x)
+            
+        print('componente: ', l, 'n_pixels: ', component['n_pixels'], 'T: ', component['T'], 'L: ', component['L'], 'B: ', component['B'], 'R: ', component['R'])
+        if (component['n_pixels'] >= n_pixels_min and
+        component['T'] <= max_height and
+        component['L'] <= max_width and
+        component['B'] >= 0 and
+        component['R'] >= 0 and
+        (component['R'] - component['L']) >= largura_min and
+        (component['B'] - component['T']) >= altura_min):
+            components.append(component)
 
-    return componentes
+    return components
 
 
 
