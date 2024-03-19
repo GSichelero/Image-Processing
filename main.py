@@ -88,7 +88,6 @@ respectivamente: topo, esquerda, baixo e direita.'''
     for y in range(max_height):
         for x in range(max_width):
             if img[y,x] == 1:
-                print('novo arroz: ', x, y, img[y,x], 'label: ', label)
                 component = {
                     'label': label,
                     'n_pixels': 0,
