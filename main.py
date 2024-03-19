@@ -101,10 +101,6 @@ respectivamente: topo, esquerda, baixo e direita.'''
                 inunda(img, x, y, label, max_width, max_height, component)
 
                 if (component['n_pixels'] >= n_pixels_min and
-                component['T'] <= max_height and
-                component['L'] <= max_width and
-                component['B'] >= 0 and
-                component['R'] >= 0 and
                 (component['R'] - component['L']) >= largura_min and
                 (component['B'] - component['T']) >= altura_min):
                     components.append(component)
