@@ -110,12 +110,12 @@ def integral_image_filter(img, window_size):
                 y2 = min(width - 1, j + half_window)
                 count_pixels = (x2 - x1 + 1) * (y2 - y1 + 1)
                 sum_values = integral_img[x2, y2, h]
+                if x1 > 0 and y1 > 0:
+                    sum_values += integral_img[x1 - 1, y1 - 1, h]
                 if x1 > 0:
                     sum_values -= integral_img[x1 - 1, y2, h]
                 if y1 > 0:
                     sum_values -= integral_img[x2, y1 - 1, h]
-                if x1 > 0 and y1 > 0:
-                    sum_values += integral_img[x1 - 1, y1 - 1, h]
                 output_img[i, j, h] = sum_values // count_pixels
 
     return output_img
