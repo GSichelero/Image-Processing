@@ -4,16 +4,11 @@ import cv2
 import matplotlib.pyplot as plt
 import math
 
-# INPUT_IMAGES =  ['trabalho4/150.bmp', 'trabalho4/205.bmp']
-
 INPUT_IMAGES =  ['trabalho4/60.bmp', 'trabalho4/82.bmp', 'trabalho4/114.bmp', 'trabalho4/150.bmp', 'trabalho4/205.bmp']
 
-# BLOCK_SIZE = 1001 or 1001
-# C = -45 or -91
-
-BLOCK_SIZE = 1001
-C = -65
-MORPHOLOGIC_KERNEL_SIZE = 6
+BLOCK_SIZE = 501
+C = -45
+MORPHOLOGIC_KERNEL_SIZE = 5
 
 ALTURA_MIN = 1
 LARGURA_MIN = 1
@@ -25,7 +20,6 @@ def binarize (img, threshold):
     img = img.astype(np.float32)
 
     return img
-
 
 
 def label(img, largura_min, altura_min, n_pixels_min):
@@ -49,6 +43,7 @@ def label(img, largura_min, altura_min, n_pixels_min):
     return labeled_components
 
 
+
 def main ():
     for image in INPUT_IMAGES:
         img = cv2.imread(image)
@@ -61,6 +56,7 @@ def main ():
         # Binarização
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         binary_img = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, blockSize=BLOCK_SIZE, C=C)
+        # cv2.imshow('Imagem binarizada', binary_img)
 
         # Abertura
         opened_img = cv2.morphologyEx(binary_img, cv2.MORPH_OPEN, np.ones((MORPHOLOGIC_KERNEL_SIZE, MORPHOLOGIC_KERNEL_SIZE), np.uint8))
@@ -68,53 +64,50 @@ def main ():
 
         # Rotulagem
         opened_img = binarize(opened_img, 128)
-        cv2.imshow('Imagem binarizada', opened_img)
         components = label(opened_img, LARGURA_MIN, ALTURA_MIN, N_PIXELS_MIN)
         print('Componentes encontrados: %d' % len(components))
 
-        # Desenha os retângulos
         for component in components:
             cv2.rectangle(img, (component['L'], component['T']), (component['R'], component['B']), (0, 255, 0), 1)
 
         cv2.imshow('Imagem com componentes', img)
 
-
-
         pixels = [component['n_pixels'] for component in components]
-        # plt.hist(pixels, bins=100)
-        # plt.xlabel('Número de pixels')
-        # plt.ylabel('Número de componentes')
-        # plt.title('Distribuição do número de pixels nos componentes')
-        # plt.show()
-        
-        # get the mean number of pixels, the standard deviation and the median, and how many components have more than the 1, 2 and 3 times the standard deviation
         pixels = np.array(pixels)
         mean = np.mean(pixels)
         std = np.std(pixels)
         median = np.median(pixels)
-        # print('Média: %f' % mean)
-        # print('Desvio padrão: %f' % std)
-        print('Mediana: %f' % median)
-        # print('Componentes com mais de 1 desvio padrão: %d' % len(pixels[pixels > mean + std]))
-        # print('Componentes com mais de 2 desvios padrão: %d' % len(pixels[pixels > mean + 2*std]))
-        # print('Componentes com mais de 3 desvios padrão: %d' % len(pixels[pixels > mean + 3*std]))
+        print('Média: %f' % mean)
+        print('Desvio padrão: %f' % std)
 
-        # get the mean size of the components
-        # mean_size = np.mean([(component['R'] - component['L']) * (component['T'] - component['B']) for component in components])
-        # print('Tamanho médio: %f' % mean_size)
-        median_size = np.median([abs((component['R'] - component['L']) * (component['T'] - component['B'])) for component in components])
+        print('Mediana: %f' % median)
+        median_size = np.median([abs((component['R'] - component['L']) * (component['B'] - component['T'])) for component in components])
         print('Tamanho mediano: %f' % median_size)
+
+        median_width = np.median([component['R'] - component['L'] for component in components])
+        print('Largura mediana: %f' % median_width)
+
+        median_height = np.median([component['B'] - component['T'] for component in components])
+        print('Altura mediana: %f' % median_height)
 
         additional_components = 0
         for component in components:
-            if component['n_pixels'] > median and abs((component['R'] - component['L']) * (component['T'] - component['B'])) > median_size:
+            if component['n_pixels'] > median and abs((component['R'] - component['L']) * (component['B'] - component['T'])) > median_size:
                 factor = math.floor(component['n_pixels'] / median)
-                size_factor = math.floor(abs((component['R'] - component['L']) * (component['T'] - component['B'])) / median_size)
-                additional_components += factor + math.floor(math.sqrt(size_factor)) - 2
+                size_factor = math.floor(abs((component['R'] - component['L']) * (component['B'] - component['T'])) / median_size)
+                width_factor = math.floor((component['R'] - component['L']) / median_width)
+                height_factor = math.floor((component['B'] - component['T']) / median_height)
+
+                # additional_components += max(size_factor, factor) - 1
+                # additional_components += factor - 1
+                additional_components += math.ceil((size_factor + factor) / 2) - 1
+
+                if size_factor > 1:
+                    print(size_factor, factor, width_factor, height_factor)
 
         print('Componentes adicionais: %d' % additional_components)
         print('Componentes totais: %d' % (len(components) + additional_components))
-        print("--------------------\n")
+        print("\n--------------------\n")
 
         cv2.waitKey(0)
         cv2.destroyAllWindows()
