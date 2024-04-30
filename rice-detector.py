@@ -24,7 +24,7 @@ def binarize (img, threshold):
 
 def label(img, largura_min, altura_min, n_pixels_min):
     img = cv2.convertScaleAbs(img)
-    num_labels, labeled_img, stats, centroids = cv2.connectedComponentsWithStats(img, connectivity=8, ltype=cv2.CV_32S)
+    num_labels, labeled_img, stats, centroids = cv2.connectedComponentsWithStats(img, connectivity=4, ltype=cv2.CV_32S)
 
     labeled_components = []
     for label in range(1, num_labels):
@@ -82,7 +82,7 @@ def main ():
 
         print('Mediana: %f' % median)
         median_size = np.median([abs((component['R'] - component['L']) * (component['B'] - component['T'])) for component in components])
-        print('Tamanho mediano: %f' % median_size)
+        print('Área mediana: %f' % median_size)
 
         median_width = np.median([component['R'] - component['L'] for component in components])
         print('Largura mediana: %f' % median_width)
@@ -97,13 +97,19 @@ def main ():
                 size_factor = math.floor(abs((component['R'] - component['L']) * (component['B'] - component['T'])) / median_size)
                 width_factor = math.floor((component['R'] - component['L']) / median_width)
                 height_factor = math.floor((component['B'] - component['T']) / median_height)
+                std_factor = math.floor(component['n_pixels'] / std)
 
                 # additional_components += max(size_factor, factor) - 1
                 # additional_components += factor - 1
-                additional_components += math.ceil((size_factor + factor) / 2) - 1
+                if factor > size_factor:
+                    # additional_components += math.ceil((size_factor + factor * 9) / 10) - 1
+                    additional_components += factor - 1
+                else:
+                    additional_components += math.ceil((size_factor + factor) / 2) - 1
+                    # additional_components += size_factor - 1
 
                 if size_factor > 1:
-                    print(size_factor, factor, width_factor, height_factor)
+                    print(size_factor, factor)
 
         print('Componentes adicionais: %d' % additional_components)
         print('Componentes totais: %d' % (len(components) + additional_components))
