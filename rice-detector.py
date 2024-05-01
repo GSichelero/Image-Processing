@@ -90,43 +90,22 @@ def main ():
         median = np.median(pixels)
         print('Média: %f' % mean)
         print('Desvio padrão: %f' % std)
-
         print('Mediana: %f' % median)
-        median_size = np.median([abs((component['R'] - component['L']) * (component['B'] - component['T'])) for component in components])
-        mean_size = np.mean([abs((component['R'] - component['L']) * (component['B'] - component['T'])) for component in components])
-        std_size = np.std([abs((component['R'] - component['L']) * (component['B'] - component['T'])) for component in components])
-        print('Desvio padrão da área: %f' % std_size)
-        print('Área média: %f' % mean_size)
-        print('Área mediana: %f' % median_size)
-        median_mean_factor = mean_size / ((mean_size + median_size) / 2)
-        std_median_factor = std_size / ((std_size + median_size))
-        print('Fator média/mediana: %f' % median_mean_factor)
-        print('Fator std/mediana: %f' % std_median_factor)
 
-        additional_components = 0
         total_factor = 0
-        total_std_factor = 0
-        total_size_factor = 0
-        total_size_std_factor = 0
         for component in components:
-            # if component['n_pixels'] > median and abs((component['R'] - component['L']) * (component['B'] - component['T'])) > median_size:
-            factor = round(component['n_pixels'] / median, 2)
-            std_factor = round((component['n_pixels'] - median) / std, 2)
-            size_factor = round(abs((component['R'] - component['L']) * (component['B'] - component['T'])) / median_size, 2)
-            size_std_factor = round((abs((component['R'] - component['L']) * (component['B'] - component['T'])) - median_size) / std_size, 2)
-
-            # if factor > size_factor:
-            #     additional_components += factor - 1
-            # else:
-            #     additional_components += math.ceil((size_factor + factor) / 2) - 1
-            # additional_rices = math.floor((size_factor / median_mean_factor) / 1 - 1)
-            additional_rices = round(factor, 0)
             if component['n_pixels'] > 1.5 * median:
                 total_factor += component['n_pixels']
-                additional_components += additional_rices
+                print(f'Componente: {component["n_pixels"]} = {str(round(component["n_pixels"] / (median * 1), 2))}')
 
-        # print(len(components) + round(total_factor/(median * 1.3), 0))
-        calculate_additional_rices = round(total_factor/(median * 1.26), 0)
+        calculate_additional_rices = math.ceil(total_factor/(median * 1.25))
+        print(calculate_additional_rices)
+        calculate_additional_rices = custom_round(total_factor/(median * 1.25))
+        print(calculate_additional_rices)
+        calculate_additional_rices = round(total_factor/(median * 1.25), 0)
+        print(calculate_additional_rices)
+        calculate_additional_rices = math.floor(total_factor/(median * 1.25))
+        print(calculate_additional_rices)
         print('Componentes adicionais: %d' % calculate_additional_rices)
         print('Componentes totais: %d' % (len(components) + calculate_additional_rices))
         print("\n--------------------\n")
