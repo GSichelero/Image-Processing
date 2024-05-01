@@ -14,6 +14,17 @@ ALTURA_MIN = 1
 LARGURA_MIN = 1
 N_PIXELS_MIN = 1
 
+ROUND_THRESHOLD = 0.9
+
+
+def custom_round(number):
+    integer_part = int(number)
+    decimal_part = number - integer_part
+    if decimal_part > ROUND_THRESHOLD:
+        return math.ceil(number)
+    else:
+        return math.floor(number)
+
 
 def binarize (img, threshold):
     img = np.where(img < threshold, 0, 1)
@@ -82,37 +93,42 @@ def main ():
 
         print('Mediana: %f' % median)
         median_size = np.median([abs((component['R'] - component['L']) * (component['B'] - component['T'])) for component in components])
+        mean_size = np.mean([abs((component['R'] - component['L']) * (component['B'] - component['T'])) for component in components])
+        std_size = np.std([abs((component['R'] - component['L']) * (component['B'] - component['T'])) for component in components])
+        print('Desvio padrão da área: %f' % std_size)
+        print('Área média: %f' % mean_size)
         print('Área mediana: %f' % median_size)
-
-        median_width = np.median([component['R'] - component['L'] for component in components])
-        print('Largura mediana: %f' % median_width)
-
-        median_height = np.median([component['B'] - component['T'] for component in components])
-        print('Altura mediana: %f' % median_height)
+        median_mean_factor = mean_size / ((mean_size + median_size) / 2)
+        std_median_factor = std_size / ((std_size + median_size))
+        print('Fator média/mediana: %f' % median_mean_factor)
+        print('Fator std/mediana: %f' % std_median_factor)
 
         additional_components = 0
+        total_factor = 0
+        total_std_factor = 0
+        total_size_factor = 0
+        total_size_std_factor = 0
         for component in components:
-            if component['n_pixels'] > median and abs((component['R'] - component['L']) * (component['B'] - component['T'])) > median_size:
-                factor = math.floor(component['n_pixels'] / median)
-                size_factor = math.floor(abs((component['R'] - component['L']) * (component['B'] - component['T'])) / median_size)
-                width_factor = math.floor((component['R'] - component['L']) / median_width)
-                height_factor = math.floor((component['B'] - component['T']) / median_height)
-                std_factor = math.floor(component['n_pixels'] / std)
+            # if component['n_pixels'] > median and abs((component['R'] - component['L']) * (component['B'] - component['T'])) > median_size:
+            factor = round(component['n_pixels'] / median, 2)
+            std_factor = round((component['n_pixels'] - median) / std, 2)
+            size_factor = round(abs((component['R'] - component['L']) * (component['B'] - component['T'])) / median_size, 2)
+            size_std_factor = round((abs((component['R'] - component['L']) * (component['B'] - component['T'])) - median_size) / std_size, 2)
 
-                # additional_components += max(size_factor, factor) - 1
-                # additional_components += factor - 1
-                if factor > size_factor:
-                    # additional_components += math.ceil((size_factor + factor * 9) / 10) - 1
-                    additional_components += factor - 1
-                else:
-                    additional_components += math.ceil((size_factor + factor) / 2) - 1
-                    # additional_components += size_factor - 1
+            # if factor > size_factor:
+            #     additional_components += factor - 1
+            # else:
+            #     additional_components += math.ceil((size_factor + factor) / 2) - 1
+            # additional_rices = math.floor((size_factor / median_mean_factor) / 1 - 1)
+            additional_rices = round(factor, 0)
+            if component['n_pixels'] > 1.5 * median:
+                total_factor += component['n_pixels']
+                additional_components += additional_rices
 
-                if size_factor > 1:
-                    print(size_factor, factor)
-
-        print('Componentes adicionais: %d' % additional_components)
-        print('Componentes totais: %d' % (len(components) + additional_components))
+        # print(len(components) + round(total_factor/(median * 1.3), 0))
+        calculate_additional_rices = round(total_factor/(median * 1.26), 0)
+        print('Componentes adicionais: %d' % calculate_additional_rices)
+        print('Componentes totais: %d' % (len(components) + calculate_additional_rices))
         print("\n--------------------\n")
 
         cv2.waitKey(0)
