@@ -1,7 +1,6 @@
 import sys
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
 import math
 
 INPUT_IMAGES =  ['trabalho4/60.bmp', 'trabalho4/82.bmp', 'trabalho4/114.bmp', 'trabalho4/150.bmp', 'trabalho4/205.bmp']
@@ -10,20 +9,14 @@ BLOCK_SIZE = 501
 C = -45
 MORPHOLOGIC_KERNEL_SIZE = 5
 
-ALTURA_MIN = 1
-LARGURA_MIN = 1
-N_PIXELS_MIN = 1
+BINARIZATION_THRESHOLD = 128
 
-ROUND_THRESHOLD = 0.9
+ALTURA_MIN = 5
+LARGURA_MIN = 5
+N_PIXELS_MIN = 50
 
-
-def custom_round(number):
-    integer_part = int(number)
-    decimal_part = number - integer_part
-    if decimal_part > ROUND_THRESHOLD:
-        return math.ceil(number)
-    else:
-        return math.floor(number)
+MULTIPLE_RICE_THRESHOLD_FACTOR = 1.5
+ADDITIONAL_RICE_FACTOR = 1.25
 
 
 def binarize (img, threshold):
@@ -74,7 +67,7 @@ def main ():
         # cv2.imshow('Imagem aberta', opened_img)
 
         # Rotulagem
-        opened_img = binarize(opened_img, 128)
+        opened_img = binarize(opened_img, BINARIZATION_THRESHOLD)
         components = label(opened_img, LARGURA_MIN, ALTURA_MIN, N_PIXELS_MIN)
         print('Componentes encontrados: %d' % len(components))
 
@@ -83,31 +76,24 @@ def main ():
 
         cv2.imshow('Imagem com componentes', img)
 
+        # Encontra a mediana do número de pixels brancos (arroz) em cada componente
         pixels = [component['n_pixels'] for component in components]
         pixels = np.array(pixels)
-        mean = np.mean(pixels)
-        std = np.std(pixels)
         median = np.median(pixels)
-        print('Média: %f' % mean)
-        print('Desvio padrão: %f' % std)
-        print('Mediana: %f' % median)
 
+        # Encontra os componentes que provavelmente possuem mais de um grão de arroz e soma a quantidade de pixels deles.
         total_factor = 0
         for component in components:
-            if component['n_pixels'] > 1.5 * median:
+            # Obs: São usados fatores de correção pois a mediana pode ser levemente afetada por levar em consideração
+            # componentes com mais de um grão de arroz como um só componente.
+            if component['n_pixels'] > MULTIPLE_RICE_THRESHOLD_FACTOR * median:
                 total_factor += component['n_pixels']
-                print(f'Componente: {component["n_pixels"]} = {str(round(component["n_pixels"] / (median * 1), 2))}')
 
-        calculate_additional_rices = math.ceil(total_factor/(median * 1.25))
-        print(calculate_additional_rices)
-        calculate_additional_rices = custom_round(total_factor/(median * 1.25))
-        print(calculate_additional_rices)
-        calculate_additional_rices = round(total_factor/(median * 1.25), 0)
-        print(calculate_additional_rices)
-        calculate_additional_rices = math.floor(total_factor/(median * 1.25))
-        print(calculate_additional_rices)
+        # Calcula a quantidade de arroz adicionais baseado na quantidade mediana de pixels de um arroz e
+        # na quantidade total de pixels de arroz dos componentes que provavelmente possuem mais de um grão de arroz.
+        calculate_additional_rices = math.floor(total_factor/(median * ADDITIONAL_RICE_FACTOR))
         print('Componentes adicionais: %d' % calculate_additional_rices)
-        print('Componentes totais: %d' % (len(components) + calculate_additional_rices))
+        print('Número de grãos de arroz: %d' % (len(components) + calculate_additional_rices))
         print("\n--------------------\n")
 
         cv2.waitKey(0)
